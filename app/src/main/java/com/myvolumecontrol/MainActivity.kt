@@ -37,6 +37,7 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.PushPin
@@ -77,6 +78,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
@@ -149,6 +153,8 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
     var adding by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<SoundProfile?>(null) }
     var showLevels by remember { mutableStateOf(true) }
+    val scrollState = rememberScrollState()
+    var viewportBounds by remember { mutableStateOf(Rect.Zero) }
     val snapshot = app.current
     val active = app.activeProfile
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -161,7 +167,9 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
 
     Scaffold { insets ->
         Column(
-            Modifier.fillMaxSize().padding(insets).verticalScroll(rememberScrollState())
+            Modifier.fillMaxSize().padding(insets)
+                .onGloballyPositioned { viewportBounds = it.boundsInRoot() }
+                .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
@@ -207,20 +215,13 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
                         Text("New")
                     }
                 }
-                Text("Pin up to three profiles for one-tap notification access.",
+                Text("Hold a drag handle to reorder. Pinned shortcuts follow this order.",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (app.profiles.isEmpty()) {
                     Text("No saved profiles yet. Tap New to save your current sound settings.")
                 }
-                app.profiles.forEach { profile ->
-                    ProfileCard(
-                        profile, active?.id == profile.id,
-                        onApply = { app.applyProfile(profile.id) },
-                        onPin = { app.togglePin(profile.id) },
-                        onEdit = { editing = profile },
-                        onDelete = { deleting = profile },
-                    )
-                }
+                ProfileList(app, active?.id, scrollState, viewportBounds,
+                    onEdit = { editing = it }, onDelete = { deleting = it })
             }
 
             Card(shape = RoundedCornerShape(24.dp)) {
@@ -366,14 +367,19 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
 }
 
 @Composable
-private fun ProfileCard(profile: SoundProfile, active: Boolean, onApply: () -> Unit,
-    onPin: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit) {
+internal fun ProfileCard(profile: SoundProfile, active: Boolean, onApply: () -> Unit,
+    onPin: () -> Unit, onEdit: () -> Unit, onDelete: () -> Unit,
+    modifier: Modifier, dragHandle: Modifier, canMoveUp: Boolean, canMoveDown: Boolean,
+    onMoveUp: () -> Unit, onMoveDown: () -> Unit) {
     var menu by remember { mutableStateOf(false) }
-    Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(
+    Card(modifier = modifier, shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(
         containerColor = if (active) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     )) {
-        Row(Modifier.padding(start = 16.dp, end = 6.dp, top = 12.dp, bottom = 12.dp),
+        Row(Modifier.padding(start = 4.dp, end = 6.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically) {
+            Box(dragHandle.size(48.dp), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.DragHandle, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -398,6 +404,10 @@ private fun ProfileCard(profile: SoundProfile, active: Boolean, onApply: () -> U
                     DropdownMenuItem(text = { Text(if (profile.pinned) "Unpin shortcut" else "Pin shortcut") },
                         leadingIcon = { Icon(Icons.Outlined.PushPin, null) },
                         onClick = { menu = false; onPin() })
+                    DropdownMenuItem(text = { Text("Move up") }, enabled = canMoveUp,
+                        onClick = { menu = false; onMoveUp() })
+                    DropdownMenuItem(text = { Text("Move down") }, enabled = canMoveDown,
+                        onClick = { menu = false; onMoveDown() })
                     DropdownMenuItem(text = { Text("Delete profile") },
                         leadingIcon = { Icon(Icons.Outlined.DeleteOutline, null) },
                         onClick = { menu = false; onDelete() })

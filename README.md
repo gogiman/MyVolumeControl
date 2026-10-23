@@ -27,6 +27,12 @@ The debug APK is `app\build\outputs\apk\debug\app-debug.apk`.
   when no saved profile matches the actual sound settings.
 * Pin up to three profiles using each profile's menu. Enable **Notification
   shortcuts**, and allow notification permission on Android 13+.
+* Hold a profile's drag handle and move it up or down to reorder. Drag near the
+  top or bottom of the screen to scroll a longer list. Release to save; cancelling
+  a drag leaves the previous order unchanged. The profile menu and accessibility
+  actions also offer **Move up** and **Move down**.
+  Both notification styles show pinned profiles in the saved list order.
+  Reordering does not change pin membership, current sound or the selected profile.
 * Choose **Notification shortcuts > Notification style**:
   **Minimal** (the default) shows the matching profile (or Custom), sound mode,
   ring level and up to three native profile actions.

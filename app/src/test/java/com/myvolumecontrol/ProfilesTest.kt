@@ -167,4 +167,48 @@ class ProfilesTest {
         assertEquals("Out", findActiveProfile(profiles, snapshot(), "deleted")?.id)
         assertEquals("Out", findActiveProfile(profiles, snapshot(), null)?.id)
     }
+
+    @Test fun `dragging last profile to first preserves settings and pins`() {
+        val profiles = listOf(profile("Out"), profile("Silent"), profile("Home"))
+        val moved = moveProfile(profiles, "Home", 0)
+        assertEquals(listOf("Home", "Out", "Silent"), moved.map { it.id })
+        assertEquals(profiles.toSet(), moved.toSet())
+        assertEquals("Home", findActiveProfile(moved, snapshot(), "Home")?.id)
+    }
+
+    @Test fun `dragging first profile to last works in both directions`() {
+        val profiles = listOf(profile("Out"), profile("Silent"), profile("Home"))
+        val moved = moveProfile(profiles, "Out", 2)
+        assertEquals(listOf("Silent", "Home", "Out"), moved.map { it.id })
+        assertEquals(profiles, moveProfile(moved, "Out", 0))
+        assertSame(profiles, moveProfile(profiles, "Out", 0))
+    }
+
+    @Test fun `notification buttons follow pinned subsequence of saved order`() {
+        val profiles = listOf(profile("Out"), profile("Other", false), profile("Silent"), profile("Home"))
+        val ordered = profilesInOrder(profiles, listOf("Home", "Other", "Out", "Silent"))
+        assertEquals(listOf("Home", "Out", "Silent"), ordered.filter { it.pinned }.map { it.id })
+        assertEquals(ordered, profilesInOrder(profiles, ordered.map { it.id }))
+        assertEquals(1, ordered.count { !it.pinned })
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `reorder cannot silently drop profiles`() {
+        profilesInOrder(listOf(profile("Out"), profile("Home")), listOf("Home"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `reorder rejects duplicate IDs`() {
+        profilesInOrder(listOf(profile("Out"), profile("Home")), listOf("Out", "Out"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `reorder rejects deleted or unknown IDs`() {
+        profilesInOrder(listOf(profile("Out"), profile("Home")), listOf("Out", "Unknown"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `moving outside list bounds is rejected`() {
+        moveProfile(listOf(profile("Home")), "Home", -1)
+    }
 }

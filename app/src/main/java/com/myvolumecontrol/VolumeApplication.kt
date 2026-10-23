@@ -187,6 +187,11 @@ class VolumeApplication : Application() {
         }
     }
 
+    fun reorderProfiles(orderedIds: List<String>): Boolean = perform {
+        val updated = profilesInOrder(profiles, orderedIds)
+        if (updated != profiles) updateProfiles(updated)
+    }
+
     private fun updateProfiles(updated: List<SoundProfile>) {
         check(storageHealthy) { "Profile storage could not be read. Clear app storage to reset it." }
         store.save(updated)

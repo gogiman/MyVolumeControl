@@ -96,3 +96,19 @@ fun validateProfileName(name: String, profiles: List<SoundProfile>, editingId: S
 
 fun canPin(profiles: List<SoundProfile>, id: String): Boolean =
     profiles.any { it.id == id && it.pinned } || profiles.count { it.pinned } < 3
+
+fun profilesInOrder(profiles: List<SoundProfile>, orderedIds: List<String>): List<SoundProfile> {
+    val byId = profiles.associateBy { it.id }
+    require(orderedIds.size == profiles.size && orderedIds.toSet() == byId.keys) {
+        "The profile list changed. Try reordering it again."
+    }
+    return orderedIds.map(byId::getValue)
+}
+
+fun moveProfile(profiles: List<SoundProfile>, id: String, targetIndex: Int): List<SoundProfile> {
+    require(targetIndex in profiles.indices) { "Invalid profile position." }
+    val from = profiles.indexOfFirst { it.id == id }
+    require(from >= 0) { "This profile no longer exists." }
+    if (from == targetIndex) return profiles
+    return profiles.toMutableList().apply { add(targetIndex, removeAt(from)) }
+}
