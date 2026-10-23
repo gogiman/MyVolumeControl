@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="4dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/notification_ring_volume"
+            android:textColor="@color/notification_text"
+            android:textSize="14sp" />
+        <TextView
+            android:id="@+id/ring_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/notification_text"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/ring_down"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/notification_chip"
+            android:contentDescription="@string/notification_ring_down"
+            android:gravity="center"
+            android:text="@string/notification_minus"
+            android:textColor="@color/notification_text"
+            android:textSize="22sp" />
+        <ProgressBar
+            android:id="@+id/ring_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="4dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:importantForAccessibility="no"
+            android:indeterminate="false"
+            android:progressBackgroundTint="@color/notification_track"
+            android:progressTint="@color/notification_accent" />
+        <TextView
+            android:id="@+id/ring_up"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/notification_chip"
+            android:contentDescription="@string/notification_ring_up"
+            android:gravity="center"
+            android:text="@string/notification_plus"
+            android:textColor="@color/notification_text"
+            android:textSize="22sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/profile_shortcuts"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/profile_one"
+            style="@style/NotificationProfileChip"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:id="@+id/profile_two"
+            style="@style/NotificationProfileChip"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp" />
+        <TextView
+            android:id="@+id/profile_three"
+            style="@style/NotificationProfileChip"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </LinearLayout>
+    <TextView
+        android:id="@+id/empty_profiles"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="@string/notification_no_profiles"
+        android:textColor="@color/notification_text"
+        android:textSize="13sp"
+        android:visibility="gone" />
+</LinearLayout>

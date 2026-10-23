@@ -1,0 +1,8 @@
+<resources>
+    <color name="notification_text">#E0ECE4</color>
+    <color name="notification_chip_background">#303F36</color>
+    <color name="notification_active_background">#385B47</color>
+    <color name="notification_active_text">#C2EED4</color>
+    <color name="notification_accent">#A1D5BE</color>
+    <color name="notification_track">#46544A</color>
+</resources>

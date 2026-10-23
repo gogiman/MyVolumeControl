@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">My Volume Control</string>
+    <string name="notification_channel">Sound profiles</string>
+    <string name="notification_channel_description">Quiet, one-tap shortcuts to your pinned sound profiles.</string>
+    <string name="notification_ring_volume">Ring volume</string>
+    <string name="notification_ring_down">Decrease ring volume</string>
+    <string name="notification_ring_up">Increase ring volume</string>
+    <string name="notification_minus">\u2212</string>
+    <string name="notification_plus">+</string>
+    <string name="notification_level">%1$d / %2$d</string>
+    <string name="notification_apply_profile">Apply %1$s profile</string>
+    <string name="notification_active_profile">%1$s profile, active</string>
+    <string name="notification_no_profiles">Open the app to pin profiles</string>
+</resources>

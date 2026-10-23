@@ -1,0 +1,18 @@
+<resources>
+    <style name="Theme.MyVolumeControl" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorAccent">#A8DCC7</item>
+        <item name="android:windowBackground">#111816</item>
+    </style>
+    <style name="NotificationProfileChip">
+        <item name="android:background">@drawable/notification_chip</item>
+        <item name="android:textColor">@color/notification_text</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:paddingHorizontal">8dp</item>
+    </style>
+</resources>
