@@ -30,6 +30,7 @@ data class SoundSnapshot(
     val levels: Map<VolumeStream, VolumeLevel>,
     val mode: SoundMode,
     val vibrateOnCalls: Boolean,
+    val dndMutedStreams: Set<VolumeStream> = emptySet(),
 ) {
     fun withMode(newMode: SoundMode): SoundSnapshot {
         val ring = levels.getValue(VolumeStream.RING)
@@ -41,12 +42,28 @@ data class SoundSnapshot(
         )
     }
 
-    fun matches(other: SoundSnapshot): Boolean =
-        mode == other.mode && vibrateOnCalls == other.vibrateOnCalls &&
-            VolumeStream.entries.all {
-                (mode != SoundMode.NORMAL && it in listOf(VolumeStream.RING, VolumeStream.NOTIFICATION)) ||
-                    levels.getValue(it).value == other.levels.getValue(it).value
+    fun differencesFrom(actual: SoundSnapshot): List<String> = buildList {
+        if (mode != actual.mode) add("Sound mode: requested ${mode.label}, actual ${actual.mode.label}")
+        if (vibrateOnCalls != actual.vibrateOnCalls) add("Call vibration was not accepted")
+        VolumeStream.entries.forEach { stream ->
+            val hiddenByRinger = actual.mode != SoundMode.NORMAL &&
+                stream in listOf(VolumeStream.RING, VolumeStream.NOTIFICATION)
+            val expected = levels.getValue(stream)
+            val observed = actual.levels.getValue(stream)
+            // DND returns zero for muted streams, not the stored volume index.
+            val hiddenByDnd = stream in actual.dndMutedStreams && observed.value == 0
+            if (!hiddenByRinger && !hiddenByDnd &&
+                expected.value.coerceIn(observed.min, observed.max) != observed.value) {
+                add("${stream.label}: requested ${expected.value}, actual ${observed.value}")
             }
+        }
+    }
+
+    fun matches(other: SoundSnapshot): Boolean = differencesFrom(other).isEmpty()
+
+    fun dndNotice(): String? = if (dndMutedStreams.isEmpty()) null else
+        "Do Not Disturb is muting ${dndMutedStreams.joinToString { it.label }}. " +
+            "Android hides their stored levels; these cannot be verified until DND allows them."
 }
 
 data class SoundProfile(
@@ -55,6 +72,16 @@ data class SoundProfile(
     val snapshot: SoundSnapshot,
     val pinned: Boolean,
 )
+
+fun findActiveProfile(
+    profiles: List<SoundProfile>,
+    current: SoundSnapshot?,
+    selectedId: String?,
+): SoundProfile? {
+    if (current == null) return null
+    return profiles.firstOrNull { it.id == selectedId && it.snapshot.matches(current) }
+        ?: profiles.firstOrNull { it.snapshot.matches(current) }
+}
 
 fun validateProfileName(name: String, profiles: List<SoundProfile>, editingId: String?): String? {
     val trimmed = name.trim()

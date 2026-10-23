@@ -150,7 +150,7 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
     var deleting by remember { mutableStateOf<SoundProfile?>(null) }
     var showLevels by remember { mutableStateOf(true) }
     val snapshot = app.current
-    val active = app.profiles.firstOrNull { snapshot != null && it.snapshot.matches(snapshot) }
+    val active = app.activeProfile
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) app.enableNotification(true)
         else app.perform { error("Notification permission was denied. Enable it in Notification settings to use shortcuts.") }
@@ -189,6 +189,9 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
                         val ring = it.levels.getValue(VolumeStream.RING)
                         Text("${it.mode.label}  \u00b7  Ring ${ring.value}/${ring.max}",
                             style = MaterialTheme.typography.bodyLarge)
+                        it.dndNotice()?.let { notice ->
+                            Text(notice, style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                     Text("Switch below, or use your notification shortcuts.",
                         style = MaterialTheme.typography.bodySmall)

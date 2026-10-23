@@ -11,4 +11,5 @@
     <string name="notification_apply_profile">Apply %1$s profile</string>
     <string name="notification_active_profile">%1$s profile, active</string>
     <string name="notification_no_profiles">Open the app to pin profiles</string>
+    <string name="notification_dnd_muted">Some levels are muted by Do Not Disturb</string>
 </resources>

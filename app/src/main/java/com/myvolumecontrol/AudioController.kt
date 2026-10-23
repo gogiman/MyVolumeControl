@@ -3,6 +3,7 @@ package com.myvolumecontrol
 import android.app.NotificationManager
 import android.content.Context
 import android.media.AudioManager
+import android.os.Build
 import android.provider.Settings
 
 class AudioController(private val context: Context) {
@@ -38,7 +39,34 @@ class AudioController(private val context: Context) {
         vibrateOnCalls = Settings.System.getInt(
             context.contentResolver, Settings.System.VIBRATE_WHEN_RINGING, 0,
         ) != 0,
+        dndMutedStreams = dndMutedStreams(),
     )
+
+    private fun dndMutedStreams(): Set<VolumeStream> {
+        val suppressed = when (notifications.currentInterruptionFilter) {
+            NotificationManager.INTERRUPTION_FILTER_NONE ->
+                setOf(VolumeStream.ALARM, VolumeStream.MEDIA, VolumeStream.RING, VolumeStream.NOTIFICATION)
+            NotificationManager.INTERRUPTION_FILTER_ALARMS ->
+                setOf(VolumeStream.MEDIA, VolumeStream.RING, VolumeStream.NOTIFICATION)
+            NotificationManager.INTERRUPTION_FILTER_PRIORITY -> {
+                if (!policyGranted) return emptySet()
+                val policy = if (Build.VERSION.SDK_INT >= 30) notifications.consolidatedNotificationPolicy
+                    else notifications.notificationPolicy
+                buildSet {
+                    add(VolumeStream.RING)
+                    add(VolumeStream.NOTIFICATION)
+                    if (policy.priorityCategories and NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS == 0)
+                        add(VolumeStream.ALARM)
+                    if (policy.priorityCategories and NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA == 0)
+                        add(VolumeStream.MEDIA)
+                }
+            }
+            else -> emptySet()
+        }
+        return suppressed.filterTo(mutableSetOf()) {
+            audio.isStreamMute(streamId(it)) && audio.getStreamVolume(streamId(it)) == 0
+        }
+    }
 
     fun accessibilityLevel() = VolumeLevel(
         audio.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY),
@@ -99,8 +127,10 @@ class AudioController(private val context: Context) {
         }
         if (snapshot().mode != target.mode) setMode(target.mode)
         if (snapshot().vibrateOnCalls != target.vibrateOnCalls) setVibrate(target.vibrateOnCalls)
-        check(target.matches(snapshot())) {
-            "Some settings were not accepted. Android may link Ring and Notifications, restrict call volume, or block changes during Do Not Disturb. Review the current levels before saving the profile again."
+        val differences = target.differencesFrom(snapshot())
+        check(differences.isEmpty()) {
+            "Some settings were not accepted:\n${differences.joinToString("\n")}\n\n" +
+                "Check linked Ring/Notifications, the connected audio device and Do Not Disturb."
         }
     }
 }

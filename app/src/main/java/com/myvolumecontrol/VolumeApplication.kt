@@ -1,6 +1,7 @@
 package com.myvolumecontrol
 
 import android.app.Application
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -35,6 +36,9 @@ class VolumeApplication : Application() {
         private set
     var notificationStyle by mutableStateOf(NotificationStyle.MINIMAL)
         private set
+    private var selectedProfileId by mutableStateOf<String?>(null)
+    val activeProfile: SoundProfile?
+        get() = findActiveProfile(profiles, current, selectedProfileId)
     private var storageHealthy = true
     private val handler = Handler(Looper.getMainLooper())
     private val refreshTask = Runnable { refresh() }
@@ -63,10 +67,13 @@ class VolumeApplication : Application() {
                 )
             }
             notificationStyle = store.notificationStyle
+            selectedProfileId = store.selectedProfileId
         }
         contentResolver.registerContentObserver(Settings.System.CONTENT_URI, true, observer)
         ContextCompat.registerReceiver(
-            this, audioReceiver, IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION),
+            this, audioReceiver, IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION).apply {
+                addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
+            },
             ContextCompat.RECEIVER_EXPORTED,
         )
         refresh()
@@ -150,6 +157,8 @@ class VolumeApplication : Application() {
             val profile = profiles.firstOrNull { it.id == id }
                 ?: error("This profile no longer exists. Open the app to choose another.")
             audio.apply(profile)
+            store.selectedProfileId = id
+            selectedProfileId = id
         }
         refresh()
         return success
@@ -157,6 +166,11 @@ class VolumeApplication : Application() {
 
     fun saveProfile(id: String?, name: String, snapshot: SoundSnapshot): Boolean = perform {
         validateProfileName(name, profiles, id)?.let { error(it) }
+        check(snapshot.dndMutedStreams.isEmpty()) {
+            "Android is hiding some volume levels while Do Not Disturb is active. " +
+                "Turn off Do Not Disturb before saving current settings as a new profile. " +
+                "Existing profiles can still be edited and applied."
+        }
         val profile = SoundProfile(
             id ?: UUID.randomUUID().toString(), name.trim(), snapshot,
             profiles.firstOrNull { it.id == id }?.pinned ?: (profiles.count { it.pinned } < 3),

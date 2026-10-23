@@ -7,6 +7,14 @@ import org.json.JSONObject
 class ProfileStore(context: Context) {
     private val preferences = context.getSharedPreferences("sound_profiles", Context.MODE_PRIVATE)
 
+    var selectedProfileId: String?
+        get() = preferences.getString("selected_profile_id", null)
+        set(value) {
+            check(preferences.edit().putString("selected_profile_id", value).commit()) {
+                "Could not save the selected profile."
+            }
+        }
+
     var notificationEnabled: Boolean
         get() = preferences.getBoolean("notification_enabled", false)
         set(value) {

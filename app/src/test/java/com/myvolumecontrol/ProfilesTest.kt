@@ -82,4 +82,89 @@ class ProfilesTest {
         }
         assertEquals(NotificationStyle.MINIMAL, NotificationStyle.entries.first())
     }
+
+    @Test fun `Silent matches when DND hides the configured alarm level on Pixel`() {
+        val requested = snapshot().copy(mode = SoundMode.SILENT)
+        val actual = requested.copy(
+            levels = requested.levels + (VolumeStream.ALARM to VolumeLevel(0, 1, 7)),
+            dndMutedStreams = setOf(VolumeStream.ALARM),
+        )
+        assertTrue(requested.matches(actual))
+        assertNotNull(actual.dndNotice())
+        assertNull(requested.dndNotice())
+    }
+
+    @Test fun `muted level without DND remains a rejected setting`() {
+        val requested = snapshot().copy(mode = SoundMode.SILENT)
+        val actual = requested.copy(
+            levels = requested.levels + (VolumeStream.ALARM to VolumeLevel(0, 1, 7)),
+        )
+        assertFalse(requested.matches(actual))
+        assertEquals(listOf("Alarm: requested 3, actual 0"), requested.differencesFrom(actual))
+    }
+
+    @Test fun `DND cannot hide wrong mode vibration or audible stream levels`() {
+        val requested = snapshot().copy(mode = SoundMode.SILENT)
+        val actual = requested.copy(
+            mode = SoundMode.NORMAL,
+            vibrateOnCalls = true,
+            levels = requested.levels +
+                (VolumeStream.ALARM to VolumeLevel(0, 1, 7)) +
+                (VolumeStream.MEDIA to VolumeLevel(1, 0, 7)),
+            dndMutedStreams = setOf(VolumeStream.ALARM),
+        )
+        val differences = requested.differencesFrom(actual)
+        assertEquals(3, differences.size)
+        assertTrue(differences.any { it.startsWith("Media:") })
+        assertFalse(requested.matches(actual))
+    }
+
+    @Test fun `unmuted alarm is verified again after leaving Silent`() {
+        val requested = snapshot()
+        val wrong = requested.copy(
+            levels = requested.levels + (VolumeStream.ALARM to VolumeLevel(4, 1, 7)),
+        )
+        assertFalse(requested.matches(wrong))
+        assertTrue(requested.matches(snapshot()))
+    }
+
+    @Test fun `DND marked stream with nonzero readback is still verified`() {
+        val requested = snapshot()
+        val wrong = requested.copy(
+            levels = requested.levels + (VolumeStream.ALARM to VolumeLevel(4, 1, 7)),
+            dndMutedStreams = setOf(VolumeStream.ALARM),
+        )
+        assertFalse(requested.matches(wrong))
+    }
+
+    @Test fun `readback comparison uses same device limits as application`() {
+        val requested = snapshot().copy(
+            levels = snapshot().levels + (VolumeStream.MEDIA to VolumeLevel(15, 0, 25)),
+        )
+        val actual = snapshot().copy(
+            levels = snapshot().levels + (VolumeStream.MEDIA to VolumeLevel(7, 0, 7)),
+        )
+        assertTrue(requested.matches(actual))
+    }
+
+    @Test fun `selected Home wins over identical Out settings`() {
+        val profiles = listOf(profile("Out"), profile("Home"))
+        assertEquals("Home", findActiveProfile(profiles, snapshot(), "Home")?.id)
+        assertEquals("Out", findActiveProfile(profiles, snapshot(), "Out")?.id)
+    }
+
+    @Test fun `selected profile is not active when actual sound differs`() {
+        val profiles = listOf(profile("Out"), profile("Home"))
+        val custom = snapshot().copy(mode = SoundMode.VIBRATE)
+        assertNull(findActiveProfile(profiles, custom, "Home"))
+        assertNull(findActiveProfile(profiles, null, "Home"))
+    }
+
+    @Test fun `deleted or nonmatching selected profile falls back to actual matching profile`() {
+        val home = profile("Home").copy(snapshot = snapshot().copy(mode = SoundMode.SILENT))
+        val profiles = listOf(profile("Out"), home)
+        assertEquals("Out", findActiveProfile(profiles, snapshot(), "Home")?.id)
+        assertEquals("Out", findActiveProfile(profiles, snapshot(), "deleted")?.id)
+        assertEquals("Out", findActiveProfile(profiles, snapshot(), null)?.id)
+    }
 }

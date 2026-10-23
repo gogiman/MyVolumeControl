@@ -92,6 +92,15 @@
             android:layout_weight="1" />
     </LinearLayout>
     <TextView
+        android:id="@+id/dnd_notice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/notification_dnd_muted"
+        android:textColor="@color/notification_text"
+        android:textSize="12sp"
+        android:visibility="gone" />
+    <TextView
         android:id="@+id/empty_profiles"
         android:layout_width="match_parent"
         android:layout_height="48dp"

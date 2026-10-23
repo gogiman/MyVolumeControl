@@ -21,6 +21,10 @@ The debug APK is `app\build\outputs\apk\debug\app-debug.apk`.
   examples captured from the device on first launch; they do not import another app.
 * Apply, edit, rename or delete profiles. New profiles start from current volumes.
   Editing is a draft and does not change the phone until Apply is tapped.
+  If profiles have identical settings (such as the initial Home and Out profiles),
+  the last successfully selected profile remains highlighted in the app and both
+  notification styles, even after restarting. Manual changes still show Custom
+  when no saved profile matches the actual sound settings.
 * Pin up to three profiles using each profile's menu. Enable **Notification
   shortcuts**, and allow notification permission on Android 13+.
 * Choose **Notification shortcuts > Notification style**:
@@ -59,6 +63,16 @@ headphone safety limits, or use device-specific sound routing. Actual values are
 read back after profile application; a partial or blocked application produces
 an explicit error, rather than falsely marking a profile as active. Silent does
 not mean every sound is muted: saved alarm/media levels are independent.
+
+On some phones (including Pixel Android 12), selecting Silent activates DND and
+can mute alarms too, depending on the phone's DND policy. Android then reports zero
+instead of the stored volume for those muted streams. The app excludes only these
+DND-hidden values from matching and verification and displays a DND notice, rather
+than falsely rejecting the profile. Other mismatches still produce an error with
+requested and actual values. Hidden levels are checked again once DND unmutes them.
+To capture a new profile from current settings, first disable DND so the stored
+levels are readable; existing profiles remain editable. The app does not change
+your DND policy to allow alarms.
 
 Both styles keep Android's system notification header; the expanded volume layout
 uses supported RemoteViews and light/dark chip colors. Android/OEM controls outer

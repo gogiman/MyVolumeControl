@@ -58,13 +58,14 @@ class ProfileNotification(private val context: Context) {
             return
         }
         val snapshot = app.current ?: return
-        val active = app.profiles.firstOrNull { it.snapshot.matches(snapshot) }
+        val active = app.activeProfile
         val open = PendingIntent.getActivity(
             context, 0, Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val ring = snapshot.levels.getValue(VolumeStream.RING)
         val title = active?.name ?: "Custom"
+        val dndNotice = snapshot.dndNotice()
         val builder = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_volume)
             .setContentTitle(title)
@@ -77,6 +78,9 @@ class ProfileNotification(private val context: Context) {
             .setColor(0xFF7EBAA3.toInt())
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
+        if (dndNotice != null) {
+            builder.setContentText("${snapshot.mode.label} \u00b7 Some levels muted by DND")
+        }
         val pinned = app.profiles.filter { it.pinned }.take(3)
         when (app.notificationStyle) {
             NotificationStyle.MINIMAL -> pinned.forEach { profile ->
@@ -85,7 +89,7 @@ class ProfileNotification(private val context: Context) {
             }
             NotificationStyle.VOLUME_AND_PROFILES -> builder
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-                .setCustomBigContentView(volumeView(app, ring, pinned, active?.id, open))
+                .setCustomBigContentView(volumeView(app, ring, pinned, active?.id, open, dndNotice))
         }
         if (pinned.isEmpty()) builder.setContentText("Open the app to pin up to three profiles")
         manager.notify(ID, builder.build())
@@ -111,7 +115,7 @@ class ProfileNotification(private val context: Context) {
     }
 
     private fun volumeView(app: VolumeApplication, ring: VolumeLevel, pinned: List<SoundProfile>,
-        activeId: String?, open: PendingIntent): RemoteViews {
+        activeId: String?, open: PendingIntent, dndNotice: String?): RemoteViews {
         val views = RemoteViews(context.packageName, R.layout.notification_volume_profiles)
         views.setTextViewText(R.id.ring_level, context.getString(R.string.notification_level, ring.value, ring.max))
         views.setProgressBar(R.id.ring_progress, ring.max, ring.value, false)
@@ -140,6 +144,8 @@ class ProfileNotification(private val context: Context) {
         views.setViewVisibility(R.id.profile_shortcuts, if (pinned.isEmpty()) View.GONE else View.VISIBLE)
         views.setViewVisibility(R.id.empty_profiles, if (pinned.isEmpty()) View.VISIBLE else View.GONE)
         views.setOnClickPendingIntent(R.id.empty_profiles, open)
+        views.setViewVisibility(R.id.dnd_notice, if (dndNotice == null) View.GONE else View.VISIBLE)
+        views.setTextViewText(R.id.dnd_notice, context.getString(R.string.notification_dnd_muted))
         return views
     }
 }
