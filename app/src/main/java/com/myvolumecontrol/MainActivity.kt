@@ -1,6 +1,7 @@
 package com.myvolumecontrol
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -39,6 +40,8 @@ import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.LocalCafe
+import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Tune
@@ -81,6 +84,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
@@ -131,7 +135,7 @@ class MainActivity : ComponentActivity() {
                     lifecycle.addObserver(observer)
                     onDispose { lifecycle.removeObserver(observer) }
                 }
-                VolumeScreen(app, permissionVersion, ::openSettings)
+                VolumeScreen(app, permissionVersion, ::openSettings, ::openSupport)
             }
         }
     }
@@ -145,10 +149,27 @@ class MainActivity : ComponentActivity() {
         }
         (application as VolumeApplication).perform { startActivity(intent) }
     }
+
+    private fun openSupport() {
+        (application as VolumeApplication).perform {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.support_url))).apply {
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                })
+            } catch (exception: ActivityNotFoundException) {
+                throw IllegalStateException(getString(R.string.support_browser_unavailable), exception)
+            }
+        }
+    }
 }
 
 @Composable
-private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSettings: (String) -> Unit) {
+private fun VolumeScreen(
+    app: VolumeApplication,
+    permissionVersion: Int,
+    openSettings: (String) -> Unit,
+    openSupport: () -> Unit,
+) {
     var editing by remember { mutableStateOf<SoundProfile?>(null) }
     var adding by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf<SoundProfile?>(null) }
@@ -326,6 +347,24 @@ private fun VolumeScreen(app: VolumeApplication, permissionVersion: Int, openSet
                         "Optional. Allows changing the system's vibrate-on-calls setting.",
                         canWrite) { openSettings(Settings.ACTION_MANAGE_WRITE_SETTINGS) }
                     Text("Silent profiles keep alarms as configured. Calls and notifications can be linked by your phone. Accessibility volume and existing Do Not Disturb rules remain under Android's control.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
+                Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.LocalCafe, null)
+                        Spacer(Modifier.width(10.dp))
+                        Text(stringResource(R.string.support_title), style = MaterialTheme.typography.titleMedium)
+                    }
+                    Text(stringResource(R.string.support_description),
+                        style = MaterialTheme.typography.bodyMedium)
+                    FilledTonalButton(onClick = openSupport) {
+                        Text(stringResource(R.string.support_button))
+                        Spacer(Modifier.width(8.dp))
+                        Icon(Icons.Outlined.OpenInNew, null, Modifier.size(18.dp))
+                    }
+                    Text(stringResource(R.string.support_external_notice),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }

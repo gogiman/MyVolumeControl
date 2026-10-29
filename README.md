@@ -47,6 +47,10 @@ The debug APK is `app\build\outputs\apk\debug\app-debug.apk`.
   Sound / Vibrate / Silent selection, and optional call vibration.
 * Profiles and notification preferences are stored locally. There is no internet
   permission, analytics, account, or notification-listener access.
+* **Support development** at the bottom of the main screen has an optional
+  **Buy me a coffee** button linking to https://ko-fi.com/gogiman. It opens an
+  external browser; Ko-fi handles payments. All app features remain free, and
+  the app itself still needs no internet permission.
 
 ## Permissions and Android limitations
 

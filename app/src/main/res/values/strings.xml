@@ -12,4 +12,10 @@
     <string name="notification_active_profile">%1$s profile, active</string>
     <string name="notification_no_profiles">Open the app to pin profiles</string>
     <string name="notification_dnd_muted">Some levels are muted by Do Not Disturb</string>
+    <string name="support_title">Support development</string>
+    <string name="support_description">Enjoying the app? Buy me a coffee. Completely optional; every feature stays free.</string>
+    <string name="support_button">Buy me a coffee</string>
+    <string name="support_external_notice">Opens ko-fi.com/gogiman in your browser. Payments are handled by Ko-fi, not this app.</string>
+    <string name="support_url" translatable="false">https://ko-fi.com/gogiman</string>
+    <string name="support_browser_unavailable">No app is available to open the support page. Install a browser or visit https://ko-fi.com/gogiman on another device.</string>
 </resources>
